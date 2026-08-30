@@ -61,6 +61,7 @@ public class MainActivity extends Activity {
 
     private LauncherStore store;
     private View wallpaperArea;
+    private View spacerBottom;
     private LinearLayout appPanel;
     private GridLayout grid;
     private AppGridRenderer renderer;
@@ -99,6 +100,7 @@ public class MainActivity extends Activity {
 
         store = new LauncherStore(this);
         wallpaperArea = findViewById(R.id.wallpaper_area);
+        spacerBottom = findViewById(R.id.spacer_bottom);
         appPanel = findViewById(R.id.app_panel);
         grid = findViewById(R.id.app_grid);
         pageIndicator = findViewById(R.id.page_indicator);
@@ -246,14 +248,40 @@ public class MainActivity extends Activity {
         int rows = SIZE_ROWS[size];
         pageSize = COLUMNS * rows;
 
+        // 패널 위/아래 빈 공간을 위치 설정에 맞게 분배한다.
+        // 전체 화면일 땐 위/아래 여백을 동일하게(하단 마진과 같은 값) 준다.
+        int empty = 100 - SIZE_PANEL_WEIGHT[size];
+        int topWeight, bottomWeight, panelTopMargin;
+        if (size == LauncherStore.SIZE_FULL) {
+            topWeight = 0;
+            bottomWeight = 0;
+            panelTopMargin = (int) (36 * getResources().getDisplayMetrics().density);
+        } else {
+            panelTopMargin = 0;
+            switch (store.panelPosition()) {
+                case LauncherStore.POS_TOP:
+                    topWeight = 0; bottomWeight = empty; break;
+                case LauncherStore.POS_MIDDLE:
+                    topWeight = empty / 2; bottomWeight = empty - empty / 2; break;
+                default: // POS_BOTTOM
+                    topWeight = empty; bottomWeight = 0; break;
+            }
+        }
+
         LinearLayout.LayoutParams wallpaperLp =
                 (LinearLayout.LayoutParams) wallpaperArea.getLayoutParams();
-        wallpaperLp.weight = 100 - SIZE_PANEL_WEIGHT[size];
+        wallpaperLp.weight = topWeight;
         wallpaperArea.setLayoutParams(wallpaperLp);
+
+        LinearLayout.LayoutParams spacerLp =
+                (LinearLayout.LayoutParams) spacerBottom.getLayoutParams();
+        spacerLp.weight = bottomWeight;
+        spacerBottom.setLayoutParams(spacerLp);
 
         LinearLayout.LayoutParams panelLp =
                 (LinearLayout.LayoutParams) appPanel.getLayoutParams();
         panelLp.weight = SIZE_PANEL_WEIGHT[size];
+        panelLp.topMargin = panelTopMargin; // 하단 마진(36dp)은 XML 값 유지
         appPanel.setLayoutParams(panelLp);
 
         grid.removeAllViews();
@@ -387,7 +415,7 @@ public class MainActivity extends Activity {
 
     private void showSettingsDialog() {
         String[] items = {"배경화면 선택", "배경화면 제거", "패널 크기", "패널 스타일",
-                "아이콘 크기",
+                "패널 위치", "아이콘 크기",
                 store.hideStatusBar() ? "상단바 표시" : "상단바 숨기기",
                 "앱 숨김 관리", "앱 순서 초기화"};
         new AlertDialog.Builder(this)
@@ -407,19 +435,34 @@ public class MainActivity extends Activity {
                             showPanelStyleDialog();
                             break;
                         case 4:
-                            showIconSizeDialog();
+                            showPanelPositionDialog();
                             break;
                         case 5:
+                            showIconSizeDialog();
+                            break;
+                        case 6:
                             store.setHideStatusBar(!store.hideStatusBar());
                             applyStatusBarConfig();
                             break;
-                        case 6:
+                        case 7:
                             showHiddenAppsDialog();
                             break;
-                        case 7:
+                        case 8:
                             showResetOrderDialog();
                             break;
                     }
+                })
+                .show();
+    }
+
+    private void showPanelPositionDialog() {
+        String[] labels = {"상", "중", "하"};
+        new AlertDialog.Builder(this)
+                .setTitle("패널 위치 (전체 화면 외)")
+                .setSingleChoiceItems(labels, store.panelPosition(), (dialog, which) -> {
+                    store.setPanelPosition(which);
+                    applyPanelConfig();
+                    dialog.dismiss();
                 })
                 .show();
     }

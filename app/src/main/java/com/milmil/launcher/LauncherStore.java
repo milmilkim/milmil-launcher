@@ -25,10 +25,23 @@ public class LauncherStore {
     static final int SIZE_FOUR_ROWS = 2;
     static final int SIZE_FULL = 3;
 
+    /** 패널 위치(전체 화면 외): 0 = 상, 1 = 중, 2 = 하 */
+    static final int POS_TOP = 0;
+    static final int POS_MIDDLE = 1;
+    static final int POS_BOTTOM = 2;
+
     private final SharedPreferences prefs;
 
     LauncherStore(Context context) {
         prefs = context.getSharedPreferences("launcher", Context.MODE_PRIVATE);
+    }
+
+    int panelPosition() {
+        return prefs.getInt("panelPos", POS_BOTTOM);
+    }
+
+    void setPanelPosition(int pos) {
+        prefs.edit().putInt("panelPos", pos).apply();
     }
 
     int panelStyle() {

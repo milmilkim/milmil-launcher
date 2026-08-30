@@ -50,4 +50,11 @@
 
     </LinearLayout>
 
+    <!-- 패널 위치용 하단 스페이서 (배경화면은 root 배경이라 투명) -->
+    <View
+        android:id="@+id/spacer_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0" />
+
 </com.milmil.launcher.HomeRootLayout>
